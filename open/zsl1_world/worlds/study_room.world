@@ -1,0 +1,991 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="study_room">
+
+    <!-- ==================== Physics ==================== -->
+    <physics type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
+
+    <!-- ==================== Scene ==================== -->
+    <scene>
+      <ambient>0.58 0.56 0.54 1</ambient>
+      <background>0.52 0.54 0.58 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <!-- ==================== Lighting ==================== -->
+    <!-- 顶部天空光：垂直向下，无投影，模拟无天花板时均匀漫射日光 -->
+    <light name="sky_light" type="directional">
+      <cast_shadows>false</cast_shadows>
+      <pose>7.5 7.5 10 0 0 0</pose>
+      <diffuse>0.88 0.86 0.84 1</diffuse>
+      <specular>0.20 0.20 0.18 1</specular>
+      <direction>0 0 -1</direction>
+    </light>
+
+    <!-- ==================== Gazebo ROS State Plugin ==================== -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+
+    <!-- ==================================================
+         ROOM STRUCTURE   15 m × 15 m × 4 m
+         坐标原点在角落，房间覆盖 x∈[0,15] y∈[0,15] z∈[0,4]
+         机器人出生点 ≈ (2,0)/(2,2)，紧靠南墙但无家具遮挡
+    ================================================== -->
+
+    <!-- -- Floor (木质地板) ---- -->
+    <model name="floor">
+      <static>true</static>
+      <pose>7.5 7.5 -0.025 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>15.0 15.0 0.05</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>15.0 15.0 0.05</size></box></geometry>
+          <material>
+            <!-- Gazebo 内置木纹材质 -->
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <!-- 叠加暖棕色调，让地板更像实木深色款 -->
+            <ambient>0.42 0.27 0.13 1</ambient>
+            <diffuse>0.42 0.27 0.13 1</diffuse>
+            <specular>0.18 0.10 0.04 30</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ---- Ceiling (注释掉以便 Gazebo 俯视观察) ----
+    <model name="ceiling">
+      <static>true</static>
+      <pose>7.5 7.5 4.025 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>15.0 15.0 0.05</size></box></geometry>
+          <material>
+            <ambient>0.94 0.93 0.90 1</ambient>
+            <diffuse>0.94 0.93 0.90 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    -->
+
+    <!-- ---- Wall South  y = 0 ---- -->
+    <model name="wall_south">
+      <static>true</static>
+      <pose>7.5 -0.1 2.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>15.2 0.2 4.0</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>15.2 0.2 4.0</size></box></geometry>
+          <material><ambient>0.93 0.91 0.86 1</ambient><diffuse>0.93 0.91 0.86 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ---- Wall North  y = 15 ---- -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>7.5 15.1 2.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>15.2 0.2 4.0</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>15.2 0.2 4.0</size></box></geometry>
+          <material><ambient>0.93 0.91 0.86 1</ambient><diffuse>0.93 0.91 0.86 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ---- Wall West   x = 0 ---- -->
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-0.1 7.5 2.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 15.0 4.0</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 15.0 4.0</size></box></geometry>
+          <material><ambient>0.93 0.91 0.86 1</ambient><diffuse>0.93 0.91 0.86 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ---- Wall East   x = 15 ---- -->
+    <model name="wall_east">
+      <static>true</static>
+      <pose>15.1 7.5 2.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 15.0 4.0</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 15.0 4.0</size></box></geometry>
+          <material><ambient>0.93 0.91 0.86 1</ambient><diffuse>0.93 0.91 0.86 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ---- Baseboard / 踢脚线 South ---- -->
+    <model name="baseboard_s">
+      <static>true</static>
+      <pose>7.5 0.09 0.08 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>15.0 0.02 0.15</size></box></geometry>
+          <material><ambient>0.70 0.50 0.28 1</ambient><diffuse>0.70 0.50 0.28 1</diffuse><specular>0.2 0.15 0.08 20</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="baseboard_n">
+      <static>true</static>
+      <pose>7.5 14.91 0.08 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>15.0 0.02 0.15</size></box></geometry>
+          <material><ambient>0.70 0.50 0.28 1</ambient><diffuse>0.70 0.50 0.28 1</diffuse><specular>0.2 0.15 0.08 20</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="baseboard_w">
+      <static>true</static>
+      <pose>0.09 7.5 0.08 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.02 15.0 0.15</size></box></geometry>
+          <material><ambient>0.70 0.50 0.28 1</ambient><diffuse>0.70 0.50 0.28 1</diffuse><specular>0.2 0.15 0.08 20</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="baseboard_e">
+      <static>true</static>
+      <pose>14.91 7.5 0.08 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.02 15.0 0.15</size></box></geometry>
+          <material><ambient>0.70 0.50 0.28 1</ambient><diffuse>0.70 0.50 0.28 1</diffuse><specular>0.2 0.15 0.08 20</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         DESK   书桌  1.6 m × 0.75 m × 0.75 m
+         位置: 北墙中左区域，x≈5, y≈13
+    ================================================== -->
+
+    <!-- 桌面 — 厚实木板，带倒角感用叠层 -->
+    <model name="desk_top">
+      <static>true</static>
+      <pose>5.0 13.0 0.735 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>1.60 0.75 0.05</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>1.60 0.75 0.05</size></box></geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <ambient>0.50 0.30 0.12 1</ambient>
+            <diffuse>0.50 0.30 0.12 1</diffuse>
+            <specular>0.50 0.35 0.15 60</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 桌沿加厚条 (前) -->
+    <model name="desk_edge_front">
+      <static>true</static>
+      <pose>5.0 12.645 0.705 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>1.60 0.04 0.04</size></box></geometry>
+          <material><ambient>0.42 0.24 0.09 1</ambient><diffuse>0.42 0.24 0.09 1</diffuse><specular>0.4 0.28 0.10 80</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 桌面侧面封边 (左右) -->
+    <model name="desk_edge_l">
+      <static>true</static>
+      <pose>4.185 13.0 0.705 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.04 0.75 0.04</size></box></geometry>
+          <material><ambient>0.42 0.24 0.09 1</ambient><diffuse>0.42 0.24 0.09 1</diffuse><specular>0.4 0.28 0.10 80</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="desk_edge_r">
+      <static>true</static>
+      <pose>5.815 13.0 0.705 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.04 0.75 0.04</size></box></geometry>
+          <material><ambient>0.42 0.24 0.09 1</ambient><diffuse>0.42 0.24 0.09 1</diffuse><specular>0.4 0.28 0.10 80</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 侧板式桌腿 — 两片侧板代替四根细腿，更稳重 -->
+    <model name="desk_side_l">
+      <static>true</static>
+      <pose>4.22 13.0 0.355 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.05 0.70 0.71</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.70 0.71</size></box></geometry>
+          <material><ambient>0.45 0.27 0.10 1</ambient><diffuse>0.45 0.27 0.10 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="desk_side_r">
+      <static>true</static>
+      <pose>5.78 13.0 0.355 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.05 0.70 0.71</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.70 0.71</size></box></geometry>
+          <material><ambient>0.45 0.27 0.10 1</ambient><diffuse>0.45 0.27 0.10 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 背板拉条 -->
+    <model name="desk_rail">
+      <static>true</static>
+      <pose>5.0 13.37 0.40 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>1.52 0.04 0.08</size></box></geometry>
+          <material><ambient>0.45 0.27 0.10 1</ambient><diffuse>0.45 0.27 0.10 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 抽屉面板 (1个) -->
+    <model name="desk_drawer">
+      <static>true</static>
+      <pose>5.3 12.66 0.55 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.45 0.03 0.18</size></box></geometry>
+          <material><ambient>0.48 0.29 0.11 1</ambient><diffuse>0.48 0.29 0.11 1</diffuse><specular>0.5 0.38 0.15 100</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 抽屉把手 -->
+    <model name="desk_drawer_handle">
+      <static>true</static>
+      <pose>5.3 12.63 0.55 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.008</radius><length>0.12</length></cylinder></geometry>
+          <material><ambient>0.70 0.65 0.55 1</ambient><diffuse>0.70 0.65 0.55 1</diffuse><specular>0.9 0.85 0.65 120</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         CHAIR   椅子  实木椅 + 布面坐垫
+    ================================================== -->
+
+    <!-- 坐垫 -->
+    <model name="chair_cushion">
+      <static>true</static>
+      <pose>5.0 12.10 0.46 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.46 0.46 0.08</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.46 0.46 0.08</size></box></geometry>
+          <material><ambient>0.45 0.38 0.55 1</ambient><diffuse>0.45 0.38 0.55 1</diffuse><specular>0.05 0.04 0.06 10</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 坐板框 -->
+    <model name="chair_seat_frame">
+      <static>true</static>
+      <pose>5.0 12.10 0.405 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.48 0.48 0.04</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.48 0.48 0.04</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 靠背 — 三横条 + 两竖柱 -->
+    <model name="chair_back_post_l">
+      <static>true</static>
+      <pose>4.78 12.34 0.72 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.04 0.04 0.68</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.04 0.04 0.68</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="chair_back_post_r">
+      <static>true</static>
+      <pose>5.22 12.34 0.72 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.04 0.04 0.68</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.04 0.04 0.68</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 横条 top -->
+    <model name="chair_back_bar_top">
+      <static>true</static>
+      <pose>5.0 12.34 1.03 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.46 0.04 0.04</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse><specular>0.35 0.22 0.08 50</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 横条 mid -->
+    <model name="chair_back_bar_mid">
+      <static>true</static>
+      <pose>5.0 12.34 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.46 0.03 0.04</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 横条 bottom -->
+    <model name="chair_back_bar_bot">
+      <static>true</static>
+      <pose>5.0 12.34 0.53 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.46 0.03 0.04</size></box></geometry>
+          <material><ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 四条椅腿 -->
+    <model name="chair_leg_fl"><static>true</static><pose>4.79 11.90 0.19 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="chair_leg_fr"><static>true</static><pose>5.21 11.90 0.19 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="chair_leg_bl"><static>true</static><pose>4.79 12.33 0.19 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="chair_leg_br"><static>true</static><pose>5.21 12.33 0.19 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.38</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- 前横撑 (椅腿加固条) -->
+    <model name="chair_stretcher_f"><static>true</static><pose>5.0 11.90 0.18 0 0 1.5708</pose>
+      <link name="link">
+        <visual name="vis"><geometry><cylinder><radius>0.016</radius><length>0.44</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         BOOKSHELF   书架  靠东墙南侧（x≈14.5–15，y=3–5）
+         2.0 m 长（沿Y轴）× 0.32 m 深（沿X轴）× 2.2 m 高
+    ================================================== -->
+
+    <!-- 背板 -->
+    <model name="bs_back">
+      <static>true</static>
+      <pose>14.86 4.0 1.10 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.04 2.02 2.20</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.04 2.02 2.20</size></box></geometry>
+          <material><ambient>0.38 0.22 0.08 1</ambient><diffuse>0.38 0.22 0.08 1</diffuse><specular>0.25 0.15 0.05 40</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 左侧板（南端） -->
+    <model name="bs_side_l">
+      <static>true</static>
+      <pose>14.70 3.01 1.10 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.34 0.04 2.20</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.34 0.04 2.20</size></box></geometry>
+          <material><ambient>0.38 0.22 0.08 1</ambient><diffuse>0.38 0.22 0.08 1</diffuse><specular>0.25 0.15 0.05 40</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 右侧板（北端） -->
+    <model name="bs_side_r">
+      <static>true</static>
+      <pose>14.70 4.99 1.10 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.34 0.04 2.20</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.34 0.04 2.20</size></box></geometry>
+          <material><ambient>0.38 0.22 0.08 1</ambient><diffuse>0.38 0.22 0.08 1</diffuse><specular>0.25 0.15 0.05 40</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 顶板 -->
+    <model name="bs_top">
+      <static>true</static>
+      <pose>14.70 4.0 2.18 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.34 2.00 0.04</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.34 2.00 0.04</size></box></geometry>
+          <material><ambient>0.38 0.22 0.08 1</ambient><diffuse>0.38 0.22 0.08 1</diffuse><specular>0.25 0.15 0.05 40</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 底板 -->
+    <model name="bs_bottom">
+      <static>true</static>
+      <pose>14.70 4.0 0.02 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.34 2.00 0.04</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.34 2.00 0.04</size></box></geometry>
+          <material><ambient>0.38 0.22 0.08 1</ambient><diffuse>0.38 0.22 0.08 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 层板 × 4 -->
+    <model name="bs_shelf1"><static>true</static><pose>14.70 4.0 0.54 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.34 1.96 0.03</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.34 1.96 0.03</size></box></geometry>
+          <material><ambient>0.40 0.24 0.09 1</ambient><diffuse>0.40 0.24 0.09 1</diffuse></material></visual></link>
+    </model>
+    <model name="bs_shelf2"><static>true</static><pose>14.70 4.0 1.09 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.34 1.96 0.03</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.34 1.96 0.03</size></box></geometry>
+          <material><ambient>0.40 0.24 0.09 1</ambient><diffuse>0.40 0.24 0.09 1</diffuse></material></visual></link>
+    </model>
+    <model name="bs_shelf3"><static>true</static><pose>14.70 4.0 1.63 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.34 1.96 0.03</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.34 1.96 0.03</size></box></geometry>
+          <material><ambient>0.40 0.24 0.09 1</ambient><diffuse>0.40 0.24 0.09 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- 书架上的书 — 第2层 (y=1.09 ~ 1.60)，颜色各异 -->
+    <model name="bk1"><static>true</static><pose>14.62 3.15 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.50</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.50</size></box></geometry>
+          <material><ambient>0.72 0.12 0.10 1</ambient><diffuse>0.72 0.12 0.10 1</diffuse><specular>0.08 0.04 0.04 20</specular></material></visual></link>
+    </model>
+    <model name="bk2"><static>true</static><pose>14.62 3.23 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.44</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.44</size></box></geometry>
+          <material><ambient>0.12 0.22 0.72 1</ambient><diffuse>0.12 0.22 0.72 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk3"><static>true</static><pose>14.62 3.30 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.035 0.47</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.035 0.47</size></box></geometry>
+          <material><ambient>0.15 0.52 0.18 1</ambient><diffuse>0.15 0.52 0.18 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk4"><static>true</static><pose>14.62 3.37 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.05 0.42</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.05 0.42</size></box></geometry>
+          <material><ambient>0.52 0.32 0.10 1</ambient><diffuse>0.52 0.32 0.10 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk5"><static>true</static><pose>14.62 3.45 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.46</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.46</size></box></geometry>
+          <material><ambient>0.80 0.72 0.10 1</ambient><diffuse>0.80 0.72 0.10 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk6"><static>true</static><pose>14.62 3.52 1.36 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.48</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.48</size></box></geometry>
+          <material><ambient>0.50 0.10 0.55 1</ambient><diffuse>0.50 0.10 0.55 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- 书架上的书 — 第3层 (y=1.63~2.15) 靠右侧 -->
+    <model name="bk7"><static>true</static><pose>14.62 4.38 1.87 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.44</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.44</size></box></geometry>
+          <material><ambient>0.70 0.12 0.12 1</ambient><diffuse>0.70 0.12 0.12 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk8"><static>true</static><pose>14.62 4.46 1.87 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.05 0.40</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.05 0.40</size></box></geometry>
+          <material><ambient>0.15 0.35 0.65 1</ambient><diffuse>0.15 0.35 0.65 1</diffuse></material></visual></link>
+    </model>
+    <model name="bk9"><static>true</static><pose>14.62 4.54 1.87 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.24 0.04 0.46</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.24 0.04 0.46</size></box></geometry>
+          <material><ambient>0.20 0.55 0.22 1</ambient><diffuse>0.20 0.55 0.22 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- ==================================================
+         SOFA   沙发  靠东墙中部
+    ================================================== -->
+
+    <!-- 沙发底座 -->
+    <model name="sofa_base">
+      <static>true</static>
+      <pose>13.0 8.0 0.22 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>2.2 0.80 0.44</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>2.2 0.80 0.44</size></box></geometry>
+          <material><ambient>0.30 0.28 0.48 1</ambient><diffuse>0.30 0.28 0.48 1</diffuse><specular>0.04 0.04 0.06 8</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 靠背 -->
+    <model name="sofa_back">
+      <static>true</static>
+      <pose>13.38 8.0 0.60 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>2.2 0.10 0.44</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>2.2 0.10 0.44</size></box></geometry>
+          <material><ambient>0.27 0.25 0.44 1</ambient><diffuse>0.27 0.25 0.44 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 左扶手 -->
+    <model name="sofa_arm_l">
+      <static>true</static>
+      <pose>13.14 6.97 0.48 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.16 0.78 0.60</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.16 0.78 0.60</size></box></geometry>
+          <material><ambient>0.27 0.25 0.44 1</ambient><diffuse>0.27 0.25 0.44 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 右扶手 -->
+    <model name="sofa_arm_r">
+      <static>true</static>
+      <pose>13.14 9.03 0.48 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.16 0.78 0.60</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.16 0.78 0.60</size></box></geometry>
+          <material><ambient>0.27 0.25 0.44 1</ambient><diffuse>0.27 0.25 0.44 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 沙发靠垫 (2个) -->
+    <model name="sofa_pillow_l">
+      <static>true</static>
+      <pose>13.22 7.35 0.62 0.0 0.0 1.5708</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.45 0.45 0.12</size></box></geometry>
+          <material><ambient>0.55 0.42 0.62 1</ambient><diffuse>0.55 0.42 0.62 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="sofa_pillow_r">
+      <static>true</static>
+      <pose>13.22 8.65 0.62 0.0 0.0 1.5708</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.45 0.45 0.12</size></box></geometry>
+          <material><ambient>0.55 0.42 0.62 1</ambient><diffuse>0.55 0.42 0.62 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 沙发木脚 (4个) -->
+    <model name="sofa_foot_fl"><static>true</static><pose>13.06 7.02 0.04 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.06 0.06 0.08</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.06 0.06 0.08</size></box></geometry>
+          <material><ambient>0.35 0.20 0.07 1</ambient><diffuse>0.35 0.20 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="sofa_foot_fr"><static>true</static><pose>13.06 8.98 0.04 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.06 0.06 0.08</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.06 0.06 0.08</size></box></geometry>
+          <material><ambient>0.35 0.20 0.07 1</ambient><diffuse>0.35 0.20 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="sofa_foot_bl"><static>true</static><pose>13.44 7.02 0.04 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.06 0.06 0.08</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.06 0.06 0.08</size></box></geometry>
+          <material><ambient>0.35 0.20 0.07 1</ambient><diffuse>0.35 0.20 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="sofa_foot_br"><static>true</static><pose>13.44 8.98 0.04 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><box><size>0.06 0.06 0.08</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.06 0.06 0.08</size></box></geometry>
+          <material><ambient>0.35 0.20 0.07 1</ambient><diffuse>0.35 0.20 0.07 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- ==================================================
+         COFFEE TABLE   茶几 (沙发前)
+    ================================================== -->
+
+    <model name="coffee_top">
+      <static>true</static>
+      <pose>12.2 8.0 0.48 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.90 0.55 0.04</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.90 0.55 0.04</size></box></geometry>
+          <material>
+            <script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script>
+            <ambient>0.48 0.28 0.10 1</ambient><diffuse>0.48 0.28 0.10 1</diffuse><specular>0.55 0.40 0.15 80</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="coffee_leg_fl"><static>true</static><pose>11.97 7.59 0.22 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="coffee_leg_fr"><static>true</static><pose>12.43 7.59 0.22 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="coffee_leg_bl"><static>true</static><pose>11.97 8.41 0.22 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual></link>
+    </model>
+    <model name="coffee_leg_br"><static>true</static><pose>12.43 8.41 0.22 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.022</radius><length>0.44</length></cylinder></geometry>
+          <material><ambient>0.38 0.22 0.07 1</ambient><diffuse>0.38 0.22 0.07 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- ==================================================
+         POTTED PLANT   绿植  —  靠南墙西侧角落
+    ================================================== -->
+
+    <!-- 花盆底部托碟 -->
+    <model name="plant_saucer">
+      <static>true</static>
+      <pose>1.5 1.5 0.025 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.22</radius><length>0.05</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.22</radius><length>0.05</length></cylinder></geometry>
+          <material><ambient>0.60 0.28 0.14 1</ambient><diffuse>0.60 0.28 0.14 1</diffuse><specular>0.05 0.03 0.01 10</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 花盆主体 (略带锥形感：下窄上宽，用两段叠) -->
+    <model name="plant_pot_lower">
+      <static>true</static>
+      <pose>1.5 1.5 0.14 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.16</radius><length>0.18</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.16</radius><length>0.18</length></cylinder></geometry>
+          <material><ambient>0.72 0.34 0.18 1</ambient><diffuse>0.72 0.34 0.18 1</diffuse><specular>0.06 0.03 0.01 12</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="plant_pot_upper">
+      <static>true</static>
+      <pose>1.5 1.5 0.28 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.19</radius><length>0.10</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.19</radius><length>0.10</length></cylinder></geometry>
+          <material><ambient>0.72 0.34 0.18 1</ambient><diffuse>0.72 0.34 0.18 1</diffuse><specular>0.06 0.03 0.01 12</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 土壤面 -->
+    <model name="plant_soil">
+      <static>true</static>
+      <pose>1.5 1.5 0.335 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.18</radius><length>0.01</length></cylinder></geometry>
+          <material><ambient>0.22 0.16 0.09 1</ambient><diffuse>0.22 0.16 0.09 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 茎干 -->
+    <model name="plant_stem">
+      <static>true</static>
+      <pose>1.5 1.5 0.72 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.03</radius><length>0.77</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.03</radius><length>0.77</length></cylinder></geometry>
+          <material><ambient>0.30 0.48 0.14 1</ambient><diffuse>0.30 0.48 0.14 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 主冠层 (大球) -->
+    <model name="plant_foliage_main">
+      <static>true</static>
+      <pose>1.5 1.5 1.28 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><sphere><radius>0.42</radius></sphere></geometry></collision>
+        <visual name="vis">
+          <geometry><sphere><radius>0.42</radius></sphere></geometry>
+          <material><ambient>0.14 0.52 0.10 1</ambient><diffuse>0.14 0.52 0.10 1</diffuse><specular>0.04 0.14 0.02 18</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 次冠层 — 错位小球增加层次感 -->
+    <model name="plant_foliage_l">
+      <static>true</static>
+      <pose>1.22 1.52 1.20 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><sphere><radius>0.25</radius></sphere></geometry>
+          <material><ambient>0.18 0.58 0.12 1</ambient><diffuse>0.18 0.58 0.12 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="plant_foliage_r">
+      <static>true</static>
+      <pose>1.75 1.42 1.22 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><sphere><radius>0.22</radius></sphere></geometry>
+          <material><ambient>0.12 0.46 0.09 1</ambient><diffuse>0.12 0.46 0.09 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="plant_foliage_top">
+      <static>true</static>
+      <pose>1.48 1.5 1.62 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><sphere><radius>0.20</radius></sphere></geometry>
+          <material><ambient>0.16 0.56 0.11 1</ambient><diffuse>0.16 0.56 0.11 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         FLOOR LAMP   落地灯  靠近沙发
+    ================================================== -->
+
+    <!-- 灯杆 -->
+    <model name="floor_lamp_pole">
+      <static>true</static>
+      <pose>12.1 9.9 0.9 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.025</radius><length>1.8</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.025</radius><length>1.8</length></cylinder></geometry>
+          <material><ambient>0.65 0.60 0.50 1</ambient><diffuse>0.65 0.60 0.50 1</diffuse><specular>0.9 0.85 0.65 100</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 底座 -->
+    <model name="floor_lamp_base">
+      <static>true</static>
+      <pose>12.1 9.9 0.04 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.08</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.18</radius><length>0.08</length></cylinder></geometry>
+          <material><ambient>0.55 0.50 0.42 1</ambient><diffuse>0.55 0.50 0.42 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 灯罩 (圆台，用大小两个圆柱叠) -->
+    <model name="floor_lamp_shade">
+      <static>true</static>
+      <pose>12.1 9.9 1.88 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.20</radius><length>0.25</length></cylinder></geometry>
+          <material><ambient>0.95 0.90 0.75 1</ambient><diffuse>0.95 0.90 0.75 1</diffuse><specular>0.1 0.1 0.08 10</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         RUG   地毯  沙发前
+    ================================================== -->
+
+    <model name="rug">
+      <static>true</static>
+      <pose>12.0 8.0 0.008 0 0 1.5708</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>3.0 2.2 0.015</size></box></geometry>
+          <material>
+            <ambient>0.62 0.46 0.30 1</ambient>
+            <diffuse>0.62 0.46 0.30 1</diffuse>
+            <specular>0.02 0.02 0.01 5</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         DESK LAMP   台灯  在书桌上
+    ================================================== -->
+
+    <model name="desk_lamp_base">
+      <static>true</static>
+      <pose>5.7 13.30 0.77 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse><specular>0.7 0.7 0.7 80</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="desk_lamp_arm">
+      <static>true</static>
+      <pose>5.7 13.30 1.08 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.012</radius><length>0.62</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.012</radius><length>0.62</length></cylinder></geometry>
+          <material><ambient>0.25 0.25 0.25 1</ambient><diffuse>0.25 0.25 0.25 1</diffuse><specular>0.8 0.8 0.8 100</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="desk_lamp_shade">
+      <static>true</static>
+      <pose>5.7 13.30 1.46 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.14</radius><length>0.18</length></cylinder></geometry>
+          <material><ambient>0.88 0.82 0.65 1</ambient><diffuse>0.88 0.82 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         LAPTOP   笔记本电脑  在书桌上
+    ================================================== -->
+
+    <model name="laptop_base">
+      <static>true</static>
+      <pose>4.8 13.15 0.775 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.32 0.22 0.02</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.32 0.22 0.02</size></box></geometry>
+          <material><ambient>0.22 0.22 0.22 1</ambient><diffuse>0.22 0.22 0.22 1</diffuse><specular>0.6 0.6 0.6 60</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="laptop_screen">
+      <static>true</static>
+      <pose>4.8 13.26 0.90 -0.35 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.30 0.18 0.02</size></box></geometry>
+          <material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.6 0.6 0.6 60</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="laptop_screen_glow">
+      <static>true</static>
+      <pose>4.8 13.265 0.905 -0.35 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.28 0.16 0.003</size></box></geometry>
+          <material><ambient>0.50 0.65 0.80 1</ambient><diffuse>0.50 0.65 0.80 1</diffuse><emissive>0.20 0.30 0.45 1</emissive></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         CABINET   矮柜  靠西墙
+    ================================================== -->
+
+    <model name="cabinet_body">
+      <static>true</static>
+      <pose>0.45 8.0 0.45 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.50 1.80 0.90</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.50 1.80 0.90</size></box></geometry>
+          <material>
+            <script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script>
+            <ambient>0.44 0.26 0.09 1</ambient><diffuse>0.44 0.26 0.09 1</diffuse><specular>0.40 0.28 0.10 60</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <!-- 柜门左 -->
+    <model name="cabinet_door_l">
+      <static>true</static>
+      <pose>0.72 7.56 0.45 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.02 0.86 0.84</size></box></geometry>
+          <material><ambient>0.48 0.29 0.11 1</ambient><diffuse>0.48 0.29 0.11 1</diffuse><specular>0.45 0.32 0.12 80</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 柜门右 -->
+    <model name="cabinet_door_r">
+      <static>true</static>
+      <pose>0.72 8.44 0.45 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.02 0.86 0.84</size></box></geometry>
+          <material><ambient>0.48 0.29 0.11 1</ambient><diffuse>0.48 0.29 0.11 1</diffuse><specular>0.45 0.32 0.12 80</specular></material>
+        </visual>
+      </link>
+    </model>
+    <!-- 把手 -->
+    <model name="cabinet_handle_l">
+      <static>true</static>
+      <pose>0.73 7.90 0.45 0 1.5708 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.008</radius><length>0.10</length></cylinder></geometry>
+          <material><ambient>0.68 0.62 0.52 1</ambient><diffuse>0.68 0.62 0.52 1</diffuse><specular>0.9 0.85 0.65 120</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="cabinet_handle_r">
+      <static>true</static>
+      <pose>0.73 8.10 0.45 0 1.5708 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.008</radius><length>0.10</length></cylinder></geometry>
+          <material><ambient>0.68 0.62 0.52 1</ambient><diffuse>0.68 0.62 0.52 1</diffuse><specular>0.9 0.85 0.65 120</specular></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
