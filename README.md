@@ -48,17 +48,19 @@ docker stop zsl1_sim_gazebo_humble_deploy
 
 `open/` 目录已挂载到容器内，**在宿主机直接修改文件即时生效**，无需重启容器：
 
-| 目录 | 说明 | 生效方式 |
-|---|---|---|
-| `open/zsl1_world/` | 仿真世界 / 场景文件 | 重启 Gazebo |
-| `open/zsl1_gazebo/` | Gazebo 启动配置 | 重启 Gazebo |
-| `open/zsl1_control_launch/` | 控制器启动配置 | 重启 ros2 launch |
-| `open/zsl1_TFpub_rviz/` | TF 发布与 RViz 可视化 | 容器内重新编译（见下） |
+| 目录 | 容器内路径 | 说明 | 生效方式 |
+|---|---|---|---|
+| `open/zsl1_tfpub_rviz/` | `/workspace/src/zsl1/zsl1_tfpub_rviz` | TF 发布与 RViz 可视化（含 C++ 源码） | 容器内重新编译（见下） |
+| `open/zsl1_path_follow/` | `/workspace/src/zsl1/zsl1_path_follow` | 路径跟踪包（纯 Python） | 立即生效（无需重编译） |
+| `open/zsl1_world/` | `/workspace/src/zsl1/zsl1_world` | 仿真世界 / 场景文件 | 重启 Gazebo |
+| `open/zsl1_gazebo_launch/` | `/workspace/install/.../zsl1_gazebo/launch` | Gazebo launch 配置（含 robots_config.py） | 重启 ros2 launch |
+| `open/zsl1_control_launch/` | `/workspace/install/.../zsl1_control/launch` | 控制器 launch 配置 | 重启 ros2 launch |
+| `open/zsl1_description_launch/` | `/workspace/install/.../zsl1_description/launch` | 机器人描述 launch 配置 | 重启 ros2 launch |
 
-修改 `zsl1_TFpub_rviz` 源码后，进入容器执行：
+修改 `zsl1_tfpub_rviz` 源码后，进入容器执行：
 
 ```bash
-colcon build --packages-select zsl1_TFpub_rviz
+colcon build --packages-select zsl1_tfpub_rviz
 source install/setup.bash
 ```
 
@@ -69,7 +71,7 @@ source install/setup.bash
 所有机器人的配置（数量、位姿、策略等）集中在**一个文件**中：
 
 ```
-open/zsl1_gazebo/launch/robots_config.py
+open/zsl1_gazebo_launch/robots_config.py
 ```
 
 ### 减少机器人
@@ -172,7 +174,7 @@ ros2 topic list
 **终端 4**（需要 X11 / 显示器支持）：
 
 ```bash
-ros2 launch zsl1_TFpub_rviz zsl1_rviz.launch.py
+ros2 launch zsl1_tfpub_rviz zsl1_rviz.launch.py
 ```
 
 ---

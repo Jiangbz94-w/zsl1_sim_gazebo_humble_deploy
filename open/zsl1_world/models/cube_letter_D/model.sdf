@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="cube_letter_D">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box><size>0.5 0.5 0.5</size></box>
+        </geometry>
+        <surface>
+          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box><size>0.5 0.5 0.5</size></box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://cube_letter_D/materials/scripts/</uri>
+            <uri>model://cube_letter_D/materials/textures/</uri>
+            <name>CubeLetter/D</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

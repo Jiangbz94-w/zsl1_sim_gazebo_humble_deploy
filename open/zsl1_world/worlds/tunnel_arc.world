@@ -1,0 +1,332 @@
+<?xml version="1.0"?>
+<!--
+================================================================================
+  tunnel_arc.world — 四形状短隧道圆弧排列场景
+================================================================================
+  【机器人出生点】
+    位置由 zsl1_gazebo.launch.py 的 SCENE_PRESETS 决定，
+    默认 x=0, y=0, z=0.45，朝向 +x 方向。
+
+  【三隧道排列方式】
+    仿照 colored_balls_arc.world，沿 ARC_RADIUS=5.0 m 圆弧对称排列。
+    角度：三角形(+40°) 半圆形(0°居中) 正方形(-40°)
+
+  【隧道尺寸说明】
+    · 三角形  — 底宽 1.20 m × 顶高 1.00 m，两斜板（h=0.35m处净宽 0.78 m）
+    · 半圆形  — 内径 0.60 m（拱宽 1.20 m × 拱高 0.60 m），10段弧块
+    · 正方形  — 开口宽 0.90 m × 高 0.75 m，U形三块
+    · 隧道深度（穿越方向）= 0.40 m；壁厚 = 0.10 m
+
+  【机器人穿越方式】
+    每个隧道的 yaw = atan2(-y,-x) 使 +X 面正对机器人。
+    机器人走直线冲入隧道 +X 面，沿本地 X 轴穿过，从 -X 面出来。
+
+  【重新生成】
+    cd src/zsl1/zsl1_world/worlds
+    python3 create_tunnel_arc.py
+================================================================================
+-->
+<sdf version="1.6">
+  <world name="tunnel_arc">
+
+    <!-- ==================== Physics ==================== -->
+    <physics type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
+
+    <!-- ==================== Scene ==================== -->
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.4 0.5 0.6 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <!-- ==================== Lighting ==================== -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.3 0.3 -1</direction>
+    </light>
+
+    <!-- ==================== Gazebo ROS State Plugin ==================== -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+
+    <!-- ==================== Ground Plane ==================== -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane><normal>0 0 1</normal><size>100 100</size></plane>
+          </geometry>
+          <surface>
+            <friction><ode><mu>100</mu><mu2>50</mu2></ode></friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane><normal>0 0 1</normal><size>20 20</size></plane>
+          </geometry>
+          <material>
+            <ambient>0.58 0.58 0.58 1</ambient>
+            <diffuse>0.58 0.58 0.58 1</diffuse>
+            <specular>0 0 0 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 三角形(Triangle) 隧道  θ=+40° ===== -->
+    <model name="tunnel_triangle">
+      <static>true</static>
+      <!--
+        ARC_RADIUS=5.0 m, θ=+40°
+        位置 x=3.83  y=3.21  yaw=-2.4440 rad
+        （+X 面朝向机器人，机器人沿本地 -X 方向穿越）
+      -->
+      <pose>3.83 3.21 0 0 0 -2.4440</pose>
+      <link name="left_panel">
+        <pose>0.0000 -0.3000 0.5000 1.0304 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 1.1662 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 1.1662 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.1 0.1 1</ambient>
+            <diffuse>0.9 0.1 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="right_panel">
+        <pose>0.0000 0.3000 0.5000 2.1112 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 1.1662 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 1.1662 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.1 0.1 1</ambient>
+            <diffuse>0.9 0.1 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 半圆形(Semicircle) 隧道  θ=  0° ===== -->
+    <model name="tunnel_semicircle">
+      <static>true</static>
+      <!--
+        ARC_RADIUS=5.0 m, θ=  0°
+        位置 x=5.00  y=0.00  yaw=-3.1416 rad
+        （+X 面朝向机器人，机器人沿本地 -X 方向穿越）
+      -->
+      <pose>5.00 0.00 0 0 0 -3.1416</pose>
+      <link name="arc_00">
+        <pose>0.0000 0.6420 0.1017 1.7279 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_01">
+        <pose>0.0000 0.5792 0.2951 2.0420 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_02">
+        <pose>0.0000 0.4596 0.4596 2.3562 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_03">
+        <pose>0.0000 0.2951 0.5792 2.6704 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_04">
+        <pose>0.0000 0.1017 0.6420 2.9845 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_05">
+        <pose>0.0000 -0.1017 0.6420 -2.9845 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_06">
+        <pose>0.0000 -0.2951 0.5792 -2.6704 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_07">
+        <pose>0.0000 -0.4596 0.4596 -2.3562 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_08">
+        <pose>0.0000 -0.5792 0.2951 -2.0420 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="arc_09">
+        <pose>0.0000 -0.6420 0.1017 -1.7279 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.2278 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.9 0.8 0.1 1</ambient>
+            <diffuse>0.9 0.8 0.1 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 正方形(Square) 隧道  θ=-40° ===== -->
+    <model name="tunnel_square">
+      <static>true</static>
+      <!--
+        ARC_RADIUS=5.0 m, θ=-40°
+        位置 x=3.83  y=-3.21  yaw=2.4440 rad
+        （+X 面朝向机器人，机器人沿本地 -X 方向穿越）
+      -->
+      <pose>3.83 -3.21 0 0 0 2.4440</pose>
+      <link name="left_wall">
+        <pose>0.0000 -0.5000 0.3750 0.0000 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.1000 0.7500</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.1000 0.7500</size></box></geometry>
+          <material>
+            <ambient>0.1 0.3 0.9 1</ambient>
+            <diffuse>0.1 0.3 0.9 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="right_wall">
+        <pose>0.0000 0.5000 0.3750 0.0000 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 0.1000 0.7500</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 0.1000 0.7500</size></box></geometry>
+          <material>
+            <ambient>0.1 0.3 0.9 1</ambient>
+            <diffuse>0.1 0.3 0.9 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+      <link name="top_bar">
+        <pose>0.0000 0.0000 0.8000 0.0000 0.0000 0.0000</pose>
+        <collision name="col">
+          <geometry><box><size>0.4000 1.1000 0.1000</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.4000 1.1000 0.1000</size></box></geometry>
+          <material>
+            <ambient>0.1 0.3 0.9 1</ambient>
+            <diffuse>0.1 0.3 0.9 1</diffuse>
+            <specular>0.4 0.4 0.4 30</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

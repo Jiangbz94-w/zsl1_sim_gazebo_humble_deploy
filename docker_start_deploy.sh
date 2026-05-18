@@ -7,18 +7,19 @@
 #
 # open/ 目录结构：
 #   open/
-#   ├── zsl1_TFpub_rviz/       ← TF 发布与 RViz 可视化，修改后在容器内重新编译生效
-#   ├── zsl1_world/             ← 仿真世界/场景文件，修改后重启 Gazebo 生效
-#   ├── zsl1_gazebo/            ← Gazebo 启动配置（含 robots_config.py），修改后重启 launch 生效
-#   └── zsl1_control_launch/   ← 控制器启动配置，修改后重启 launch 生效
+#   ├── zsl1_tfpub_rviz/            ← TF 发布与 RViz 可视化（含 C++ 源码），
+#   │                                  修改后在容器内 colcon build 重新编译生效
+#   ├── zsl1_path_follow/           ← 路径跟踪包（纯 Python），修改后立即生效
+#   ├── zsl1_world/                 ← 仿真世界/场景文件，修改后重启 Gazebo 生效
+#   ├── zsl1_gazebo_launch/         ← Gazebo launch 文件（含 robots_config.py），
+#   │                                  修改后重启 ros2 launch 生效（无需重建镜像）
+#   ├── zsl1_control_launch/        ← 控制器 launch 文件，修改后重启 ros2 launch 生效
+#   └── zsl1_description_launch/    ← 机器人描述 launch 文件，修改后重启 ros2 launch 生效
 #
-# 调整机器人数量：编辑 open/zsl1_gazebo/launch/robots_config.py，
-#   然后删除 __pycache__ 并重启两个 launch（无需重建镜像）：
-#     docker exec zsl1_sim_gazebo_humble_deploy find /workspace -name '__pycache__' -path '*/launch/*' -exec rm -rf {} +
-#
-# 修改 zsl1_TFpub_rviz 源码后，进入容器执行：
-#   colcon build --packages-select zsl1_TFpub_rviz
-#   source install/setup.bash
+# 调整机器人数量：编辑 open/zsl1_gazebo_launch/robots_config.py，
+#   然后清除 __pycache__ 并重启两个 launch（无需重建镜像）：
+#     docker exec zsl1_sim_gazebo_humble_deploy \
+#       find /workspace -name '__pycache__' -path '*/launch/*' -exec rm -rf {} +
 
 set -e
 
@@ -69,12 +70,14 @@ docker run -itd \
   --env="CONTAINER_NAME=${CONTAINER_NAME}" \
   \
   `# === 开放包：从宿主机挂载，直接修改文件即可 ===` \
-  --volume="${OPEN_DIR}/zsl1_TFpub_rviz:/workspace/src/zsl1/zsl1_TFpub_rviz" \
+  `# 完整源码包（挂载到 src/，修改后在容器内重新编译）` \
+  --volume="${OPEN_DIR}/zsl1_tfpub_rviz:/workspace/src/zsl1/zsl1_tfpub_rviz" \
+  --volume="${OPEN_DIR}/zsl1_path_follow:/workspace/src/zsl1/zsl1_path_follow" \
   --volume="${OPEN_DIR}/zsl1_world:/workspace/src/zsl1/zsl1_world" \
-  --volume="${OPEN_DIR}/zsl1_gazebo:/workspace/src/zsl1/zsl1_gazebo" \
-  `# launch 文件直接挂载到已安装位置，修改后重启 ros2 launch 即生效` \
+  `# launch 文件直接挂载到已安装位置，修改后重启 ros2 launch 即生效（无需重新编译）` \
+  --volume="${OPEN_DIR}/zsl1_gazebo_launch:/workspace/install/zsl1_gazebo/share/zsl1_gazebo/launch" \
   --volume="${OPEN_DIR}/zsl1_control_launch:/workspace/install/zsl1_control/share/zsl1_control/launch" \
-  --volume="${OPEN_DIR}/zsl1_gazebo/launch:/workspace/install/zsl1_gazebo/share/zsl1_gazebo/launch" \
+  --volume="${OPEN_DIR}/zsl1_description_launch:/workspace/install/zsl1_description/share/zsl1_description/launch" \
   \
   --workdir=/workspace \
   "$IMAGE"
@@ -84,4 +87,12 @@ echo ""
 echo "进入容器：  bash docker_join_deploy.sh"
 echo "停止容器：  docker stop ${CONTAINER_NAME}"
 echo ""
-echo "open/ 目录已挂载到容器内 /workspace/src/zsl1/ 对应位置，宿主机修改文件即时同步。"
+echo "open/ 目录已挂载到容器内对应位置，宿主机修改文件即时同步。"
+echo ""
+echo "挂载说明："
+echo "  src/zsl1/zsl1_tfpub_rviz       ← open/zsl1_tfpub_rviz (修改后需 colcon build)"
+echo "  src/zsl1/zsl1_path_follow      ← open/zsl1_path_follow (纯 Python，修改后立即生效)"
+echo "  src/zsl1/zsl1_world            ← open/zsl1_world (修改后重启 Gazebo)"
+echo "  install/.../zsl1_gazebo/launch ← open/zsl1_gazebo_launch (修改后重启 ros2 launch)"
+echo "  install/.../zsl1_control/launch← open/zsl1_control_launch (修改后重启 ros2 launch)"
+echo "  install/.../zsl1_description/launch← open/zsl1_description_launch (修改后重启)"

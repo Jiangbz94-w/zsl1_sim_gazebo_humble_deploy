@@ -58,17 +58,15 @@ from launch.actions import DeclareLaunchArgument, GroupAction, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, PushRosNamespace
-import sys as _sys
-
-# 从 zsl1_gazebo launch 目录读取统一机器人配置（两个 launch 共享同一份 robots_config.py）
-_sys.path.insert(0, '/workspace/src/zsl1/zsl1_gazebo/launch')
-from robots_config import ROBOTS  # noqa: E402
 
 # =====================================================================
-# 机器人实例列表由 robots_config.py 统一管理，本文件无需修改。
-# 如需调整机器人数量或参数，请编辑 open/zsl1_gazebo/launch/robots_config.py
+# 在此处添加/删除机器人实例，其余代码无需修改
+# keyboard_master: 只能有一台为 True（负责读 stdin 并广播键码）
 # =====================================================================
-SENSOBOTS = ROBOTS  # 保持向下兼容的别名
+SENSOBOTS = [
+    {"name": "zsl1sensor1", "keyboard_master": True,  "joy_dev": "/dev/input/js0", "enable_default": "true", "policy_default": "wya_lab", "startup_delay": 0.0},
+    {"name": "zsl1sensor2", "keyboard_master": False, "joy_dev": "/dev/input/js1", "enable_default": "false", "policy_default": "wya_lab", "startup_delay": 3.0},
+]
 
 
 def generate_launch_description():

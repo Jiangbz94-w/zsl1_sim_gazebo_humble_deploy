@@ -1,0 +1,323 @@
+<?xml version="1.0"?>
+<!--
+================================================================================
+  colored_balls_arc.world — 红/黄/蓝/绿四色球圆弧排列场景
+================================================================================
+  【机器人出生点】
+    位置由 zsl1_gazebo.launch.py 的 SCENE_PRESETS 决定，
+    默认 x=0, y=0, z=0.45，朝向 +x 方向。
+
+  【四球排列方式】
+    以机器人为圆心，沿半径 ARC_RADIUS 的圆弧排列，
+    4个球角度为 +40°、+15°、-15°、-40°（相对 +x 轴）。
+    球心坐标公式：x = ARC_RADIUS * cos(θ)，y = ARC_RADIUS * sin(θ)
+
+  【主要可调参数（全局搜索对应注释快速定位）】
+  ┌────────────────────┬──────────────────────────────────────────────────────┐
+  │ 参数               │ 说明                                                 │
+  ├────────────────────┼──────────────────────────────────────────────────────┤
+  │ ARC_RADIUS         │ 圆弧半径（米），即机器人到每个球的距离               │
+  │                    │ 当前值 = 5.0 m                                       │
+  │ 球角度 θ           │ 相对 +x 轴的张角，决定球间弧长和横向分布宽度        │
+  │                    │ 当前值：±40°(外侧) / ±15°(内侧)                     │
+  │ <pose> x/y         │ 由 ARC_RADIUS 和 θ 计算得出，手动微调时直接改数值   │
+  │ <pose> 第3个数字   │ 球心离地高度 = 球半径，与 <radius> 保持一致         │
+  │ <radius>           │ 球半径（米），collision 和 visual 两处同步修改       │
+  │                    │ 当前值 = 0.20 m                                      │
+  │ <mass>             │ 球质量（kg），影响被推动时的响应                     │
+  │ I = 2/5·m·r²       │ 惯量值 = 0.4 * mass * radius²，半径/质量变化时重算  │
+  └────────────────────┴──────────────────────────────────────────────────────┘
+
+  【当前配置】
+    ARC_RADIUS = 5.0 m  |  球半径 = 0.20 m  |  质量 = 0.5 kg
+    角度分布：红(+40°) 黄(+15°) 蓝(-15°) 绿(-40°)
+    球心坐标（x, y）：
+      红  ( 3.83,  3.21)
+      黄  ( 4.83,  1.29)
+      蓝  ( 4.83, -1.29)
+      绿  ( 3.83, -3.21)
+
+  【调整圆弧半径示例】
+    若想改为 3m，将每个球 pose 按比例缩放即可：
+      3/5 * (x,y) → 红(2.30, 1.93) 黄(2.90, 0.78) 蓝(2.90,-0.78) 绿(2.30,-1.93)
+
+  【直线排列版本】见同目录 colored_balls.world
+================================================================================
+-->
+<sdf version="1.6">
+  <world name="colored_balls_arc">
+
+    <!-- ==================== Physics ==================== -->
+    <physics type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
+
+    <!-- ==================== Scene ==================== -->
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.4 0.5 0.6 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <!-- ==================== Lighting ==================== -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.3 0.3 -1</direction>
+    </light>
+
+    <!-- ==================== Gazebo ROS State Plugin ==================== -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+
+    <!-- ==================== Ground Plane ==================== -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>100</mu><mu2>50</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.58 0.58 0.58 1</ambient>
+            <diffuse>0.58 0.58 0.58 1</diffuse>
+            <specular>0 0 0 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================================================
+         圆弧排列说明：
+           ARC_RADIUS = 5.0 m（机器人到球的距离，4个球相同）
+           角度分布（相对 +x 轴）：
+             红球  θ = +40°  →  x = 5*cos(40°) = 3.83,  y = 5*sin(40°) = 3.21
+             黄球  θ = +15°  →  x = 5*cos(15°) = 4.83,  y = 5*sin(15°) = 1.29
+             蓝球  θ = -15°  →  x = 5*cos(15°) = 4.83,  y = -5*sin(15°) = -1.29
+             绿球  θ = -40°  →  x = 5*cos(40°) = 3.83,  y = -5*sin(40°) = -3.21
+         球半径 = 0.20 m  →  球心 z = 0.20
+         质量 = 0.5 kg    →  惯量 I = 2/5 * 0.5 * 0.04 = 0.0080
+    ================================================== -->
+
+    <!-- ==================== 红球 (Red Ball) θ=+40° ==================== -->
+    <model name="red_ball">
+      <static>false</static>
+      <!--
+        【红球位置】
+        ARC_RADIUS（m）× cos/sin(张角°) = x/y
+        · 调整到机器人的距离：同比例缩放 x 和 y
+        · 调整张角（向左右偏）：改 y 值（正=偏左，负=偏右）
+        · z = 球半径，与下方 <radius> 保持一致
+      -->
+      <pose>3.83 3.21 0.20 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.5</mass>
+          <inertia>
+            <!-- I = 2/5 * mass * radius² = 2/5 * 0.5 * 0.04 = 0.0080 -->
+            <ixx>0.0080</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.0080</iyy><iyz>0</iyz>
+            <izz>0.0080</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <!-- 球半径（m）：同步修改 visual 中的 radius 和上方 pose 的 z -->
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.6</mu><mu2>0.6</mu2></ode>
+            </friction>
+            <bounce>
+              <restitution_coefficient>0.5</restitution_coefficient>
+              <threshold>0</threshold>
+            </bounce>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <material>
+            <ambient>0.9 0.1 0.1 1</ambient>
+            <diffuse>0.9 0.1 0.1 1</diffuse>
+            <specular>0.5 0.3 0.3 50</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================== 黄球 (Yellow Ball) θ=+15° ==================== -->
+    <model name="yellow_ball">
+      <static>false</static>
+      <!--
+        【黄球位置】
+        ARC_RADIUS（m）× cos/sin(张角°) = x/y
+        · 调整到机器人的距离：同比例缩放 x 和 y
+        · 调整张角（向左右偏）：改 y 值（正=偏左，负=偏右）
+        · z = 球半径，与下方 <radius> 保持一致
+      -->
+      <pose>4.83 1.29 0.20 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.5</mass>
+          <inertia>
+            <!-- I = 2/5 * mass * radius² = 2/5 * 0.5 * 0.04 = 0.0080 -->
+            <ixx>0.0080</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.0080</iyy><iyz>0</iyz>
+            <izz>0.0080</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <!-- 球半径（m）：同步修改 visual 中的 radius 和上方 pose 的 z -->
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.6</mu><mu2>0.6</mu2></ode>
+            </friction>
+            <bounce>
+              <restitution_coefficient>0.5</restitution_coefficient>
+              <threshold>0</threshold>
+            </bounce>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <material>
+            <ambient>0.95 0.85 0.05 1</ambient>
+            <diffuse>0.95 0.85 0.05 1</diffuse>
+            <specular>0.5 0.5 0.2 50</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================== 蓝球 (Blue Ball) θ=-15° ==================== -->
+    <model name="blue_ball">
+      <static>false</static>
+      <!--
+        【蓝球位置】
+        ARC_RADIUS（m）× cos/sin(张角°) = x/y
+        · 调整到机器人的距离：同比例缩放 x 和 y
+        · 调整张角（向左右偏）：改 y 值（正=偏左，负=偏右）
+        · z = 球半径，与下方 <radius> 保持一致
+      -->
+      <pose>4.83 -1.29 0.20 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.5</mass>
+          <inertia>
+            <!-- I = 2/5 * mass * radius² = 2/5 * 0.5 * 0.04 = 0.0080 -->
+            <ixx>0.0080</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.0080</iyy><iyz>0</iyz>
+            <izz>0.0080</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <!-- 球半径（m）：同步修改 visual 中的 radius 和上方 pose 的 z -->
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.6</mu><mu2>0.6</mu2></ode>
+            </friction>
+            <bounce>
+              <restitution_coefficient>0.5</restitution_coefficient>
+              <threshold>0</threshold>
+            </bounce>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <material>
+            <ambient>0.1 0.2 0.95 1</ambient>
+            <diffuse>0.1 0.2 0.95 1</diffuse>
+            <specular>0.3 0.3 0.6 50</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================== 绿球 (Green Ball) θ=-40° ==================== -->
+    <model name="green_ball">
+      <static>false</static>
+      <!--
+        【绿球位置】
+        ARC_RADIUS（m）× cos/sin(张角°) = x/y
+        · 调整到机器人的距离：同比例缩放 x 和 y
+        · 调整张角（向左右偏）：改 y 值（正=偏左，负=偏右）
+        · z = 球半径，与下方 <radius> 保持一致
+      -->
+      <pose>3.83 -3.21 0.20 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.5</mass>
+          <inertia>
+            <!-- I = 2/5 * mass * radius² = 2/5 * 0.5 * 0.04 = 0.0080 -->
+            <ixx>0.0080</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.0080</iyy><iyz>0</iyz>
+            <izz>0.0080</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <!-- 球半径（m）：同步修改 visual 中的 radius 和上方 pose 的 z -->
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.6</mu><mu2>0.6</mu2></ode>
+            </friction>
+            <bounce>
+              <restitution_coefficient>0.5</restitution_coefficient>
+              <threshold>0</threshold>
+            </bounce>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <sphere><radius>0.20</radius></sphere>
+          </geometry>
+          <material>
+            <ambient>0.1 0.8 0.15 1</ambient>
+            <diffuse>0.1 0.8 0.15 1</diffuse>
+            <specular>0.2 0.5 0.2 50</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

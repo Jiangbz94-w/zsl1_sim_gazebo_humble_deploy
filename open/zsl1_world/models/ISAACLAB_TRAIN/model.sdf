@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+ <model name="ISAACLAB_TRAIN">
+   <pose>0 0 0 0 0 0</pose>
+   <static>true</static>
+   <link name="link">
+     <collision name="collision">
+       <geometry>
+         <mesh>
+           <uri>model://ISAACLAB_TRAIN/meshes/ISAACLAB_TRAIN.dae</uri>
+         </mesh>
+       </geometry>
+     </collision>
+     <visual name="visual">
+       <geometry>
+         <mesh>
+           <uri>model://ISAACLAB_TRAIN/meshes/ISAACLAB_TRAIN.dae</uri>
+         </mesh>
+       </geometry>
+       <material>
+         <ambient>0.10 0.10 0.10 1</ambient>
+         <diffuse>0.65 0.65 0.65 1</diffuse>
+         <specular>0.00 0.00 0.00 1</specular>
+       </material>
+     </visual>
+   </link>
+ </model>
+</sdf>

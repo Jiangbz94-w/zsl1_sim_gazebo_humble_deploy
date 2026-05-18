@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<!--
+================================================================================
+  letter_cubes_arc.world — A/B/C/D 字母立方体圆弧排列场景
+================================================================================
+  【机器人出生点】
+    位置由 zsl1_gazebo.launch.py 的 SCENE_PRESETS 决定，
+    默认 x=0, y=0, z=0.45，朝向 +x 方向。
+
+  【四立方体排列方式】
+    仿照 colored_balls_arc.world，沿半径 ARC_RADIUS=5.0 m 的圆弧排列。
+    角度分布：A(+40°)  B(+15°)  C(-15°)  D(-40°)
+    立方体中心坐标（x, y, z）:
+      A  ( 3.83,  3.21, 0.25)  红底白字
+      B  ( 4.83,  1.29, 0.25)  黄底黑字
+      C  ( 4.83, -1.29, 0.25)  蓝底白字
+      D  ( 3.83, -3.21, 0.25)  绿底白字
+
+  【字母纹理】
+    每个立方体所有面均贴有对应字母纹理（8×8 点阵字体放大至 128×128 PNG）。
+    +X 面的 yaw 角已设置为正对机器人（原点方向）。
+
+  【立方体尺寸】
+    边长 = 0.5 m，底面贴地（z_center = 0.25 m）
+
+  【模型路径】
+    src/zsl1/zsl1_world/models/cube_letter_X/
+    GAZEBO_MODEL_PATH 已在 zsl1_world.launch.py 中配置包含该目录。
+
+  【参数调整说明】
+  ┌───────────────────┬─────────────────────────────────────────────────────┐
+  │ 参数              │ 说明                                                │
+  ├───────────────────┼─────────────────────────────────────────────────────┤
+  │ ARC_RADIUS        │ 与 colored_balls_arc.world 相同 = 5.0 m             │
+  │ <pose> x/y        │ 直接修改数值（由 r*cos/sin(θ) 得出）               │
+  │ <pose> 第3位      │ 立方体中心高度 = CUBE_SIZE/2 = 0.25 m              │
+  │ <pose> 第6位(yaw) │ 使 +X 面朝向机器人 = atan2(-y,-x)                 │
+  └───────────────────┴─────────────────────────────────────────────────────┘
+================================================================================
+-->
+<sdf version="1.6">
+  <world name="letter_cubes_arc">
+
+    <!-- ==================== Physics ==================== -->
+    <physics type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
+
+    <!-- ==================== Scene ==================== -->
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.4 0.5 0.6 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <!-- ==================== Lighting ==================== -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.3 0.3 -1</direction>
+    </light>
+
+    <!-- ==================== Gazebo ROS State Plugin ==================== -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+    </plugin>
+
+    <!-- ==================== Ground Plane ==================== -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>100</mu><mu2>50</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.58 0.58 0.58 1</ambient>
+            <diffuse>0.58 0.58 0.58 1</diffuse>
+            <specular>0 0 0 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================== A 方块 (红底白字(Red), θ=+40°) ==================== -->
+    <include>
+      <name>cube_letter_A</name>
+      <uri>model://cube_letter_A</uri>
+      <static>true</static>
+      <!--
+        【A 方块位置】
+        ARC_RADIUS=5.0, θ=+40°
+        x=3.83, y=3.21, z=0.25
+        yaw=-2.4440 rad （+X 面正对机器人）
+      -->
+      <pose>3.83 3.21 0.25 0 0 -2.4440</pose>
+    </include>
+
+    <!-- ==================== B 方块 (黄底黑字(Yellow), θ=+15°) ==================== -->
+    <include>
+      <name>cube_letter_B</name>
+      <uri>model://cube_letter_B</uri>
+      <static>true</static>
+      <!--
+        【B 方块位置】
+        ARC_RADIUS=5.0, θ=+15°
+        x=4.83, y=1.29, z=0.25
+        yaw=-2.8806 rad （+X 面正对机器人）
+      -->
+      <pose>4.83 1.29 0.25 0 0 -2.8806</pose>
+    </include>
+
+    <!-- ==================== C 方块 (蓝底白字(Blue), θ=-15°) ==================== -->
+    <include>
+      <name>cube_letter_C</name>
+      <uri>model://cube_letter_C</uri>
+      <static>true</static>
+      <!--
+        【C 方块位置】
+        ARC_RADIUS=5.0, θ=-15°
+        x=4.83, y=-1.29, z=0.25
+        yaw=2.8806 rad （+X 面正对机器人）
+      -->
+      <pose>4.83 -1.29 0.25 0 0 2.8806</pose>
+    </include>
+
+    <!-- ==================== D 方块 (绿底白字(Green), θ=-40°) ==================== -->
+    <include>
+      <name>cube_letter_D</name>
+      <uri>model://cube_letter_D</uri>
+      <static>true</static>
+      <!--
+        【D 方块位置】
+        ARC_RADIUS=5.0, θ=-40°
+        x=3.83, y=-3.21, z=0.25
+        yaw=2.4440 rad （+X 面正对机器人）
+      -->
+      <pose>3.83 -3.21 0.25 0 0 2.4440</pose>
+    </include>
+
+  </world>
+</sdf>

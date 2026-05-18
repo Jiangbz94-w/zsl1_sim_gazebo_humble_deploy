@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>zsl1_path_follow</name>
+  <version>0.0.0</version>
+  <description>Pure pursuit and velocity control based path follower (ROS 2 Humble).</description>
+  <maintainer email="fankunpeng0918@gmail.com">kunpeng</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>tf_transformations</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
