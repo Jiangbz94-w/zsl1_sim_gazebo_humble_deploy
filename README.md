@@ -144,7 +144,15 @@ export GAZEBO_MASTER_URI=http://127.0.0.1:11377
 **终端 1**（第一个启动，启动后等待 Gazebo 完全加载再开第二步）：
 
 ```bash
-ros2 launch zsl1_gazebo zsl1_gazebo.launch.py
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=empty
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=study_room
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=colored_balls
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=colored_balls_arc
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=letter_cubes_arc
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=tunnel_arc
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=stair_climb
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=isaaclab_train
+ros2 launch zsl1_gazebo zsl1_gazebo.launch.py scene:=obstacle_course
 ```
 
 ---
@@ -189,3 +197,59 @@ pkill -9 -f gzclient || true
 pkill -9 -f locomotion_sim || true
 pkill -9 -f robot_state_publisher || true
 ```
+
+---
+
+## Git 版本管理
+
+仓库地址：`git@github.com:Jiangbz94-w/zsl1_sim_gazebo_humble_deploy.git`
+
+### 首次克隆（下载）
+
+```bash
+git clone git@github.com:Jiangbz94-w/zsl1_sim_gazebo_humble_deploy.git
+cd zsl1_sim_gazebo_humble_deploy
+```
+
+### 拉取最新更新
+
+```bash
+git pull origin main
+```
+
+### 上传更改
+
+```bash
+# 查看当前改动
+git status
+
+# 暂存所有改动
+git add .
+
+# 或只暂存指定文件
+git add open/zsl1_world/worlds/my_new_world.world
+
+# 提交
+git commit -m "描述本次修改内容"
+
+# 推送到远端
+git push origin main
+```
+
+### 常用操作
+
+```bash
+# 查看提交历史
+git log --oneline
+
+# 查看文件差异
+git diff
+
+# 撤销未暂存的改动
+git checkout -- <文件路径>
+
+# 撤销已暂存但未提交的改动
+git reset HEAD <文件路径>
+```
+
+> **注意**：首次推送前请确保已配置 SSH 公钥并添加到 GitHub 账号，或使用 `git remote set-url origin https://github.com/Jiangbz94-w/zsl1_sim_gazebo_humble_deploy.git` 切换为 HTTPS 方式。
